@@ -657,7 +657,8 @@ ap3_hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
     WsfSetEvent(g_HciDrvHandleID, BLE_TRANSFER_NEEDED_EVENT);
 #endif
 
-#ifdef AM_CUSTOM_BDADDR
+//#ifdef AM_CUSTOM_BDADDR
+#if 1
     if (type == HCI_CMD_TYPE)
     {
         uint16_t opcode;
@@ -672,6 +673,10 @@ ap3_hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
             g_BLEMacAddress[0] = sDevice.ui32ChipID0;
             g_BLEMacAddress[1] = sDevice.ui32ChipID0 >> 8;
             g_BLEMacAddress[2] = sDevice.ui32ChipID0 >> 16;
+            g_BLEMacAddress[3] = 	0x02;
+            g_BLEMacAddress[4] =  0x42;
+            g_BLEMacAddress[5] =  0x00;
+
 
             HciVendorSpecificCmd(0xFC32, 6, g_BLEMacAddress);
         }
@@ -900,7 +905,7 @@ void
 HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
 {
     uint32_t ui32ErrorStatus;
- 
+
     //
     // If this handler was called in response to a heartbeat event, then it's
     // time to run a benign HCI command. Normally, the BLE controller should
