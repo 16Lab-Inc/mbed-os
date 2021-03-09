@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2019-2020 SparkFun Electronics
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,9 @@
  */
 /* stack: dynamic */
 /* heap: dynamic */
-#define MBED_APP_START 0x0000C000
-#define MBED_APP_LENGTH 0x000F4000
+//#define MBED_APP_START 0x0000C000
+#define MBED_APP_START   0x0002E000
+#define MBED_APP_LENGTH  0x000D2000
 #define MBED_RAM_START 0x10000000
 #define MBED_RAM_SIZE   384K
 #define MBED_BOOT_STACK_SIZE 0x400
