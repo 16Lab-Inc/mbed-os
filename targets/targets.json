@@ -7571,6 +7571,14 @@
         "inherits": ["AMA3B1KK"],
         "components_add": ["lis2dh12", "hm01b0"]
     },
+    "SIXTEENLAB_DK": {
+        "inherits": ["AMA3B1KK"],
+        "macros_add": ["DEV_BRD"]
+    },
+    "SIXTEENLAB_OZON": {
+        "inherits": ["AMA3B1KK"],
+        "macros_add": ["OZON_BRD"]
+    },
     "__build_tools_metadata__": {
         "version": "1",
         "public": false
