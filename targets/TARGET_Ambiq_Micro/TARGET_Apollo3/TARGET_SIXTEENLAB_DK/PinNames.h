@@ -35,25 +35,42 @@ extern "C"
 
 typedef enum
 {
-    // Digital naming
-    D1 = 1,
-    D38 = 38,
-    D36 = 36,
-    D3 = 3,
+    CTRL_LED  =      29,
+    DEBUG_P29_P9  =   45, /* GPIO45 connected to pin9 in header P29*/
 
-    // // Analog naming
-    // No analog pins
+/*
+CHRG                     ACPR    STAT1   STAT2   STATUS
+-----------------------+--------+-------+------+----------------
+Hi-Impedance             0        X         X    Not Charging, No Power,
+Pulled LOW               1        0         0    Done Charging
+Blink Slow (1.14Hz)      1        0         1    Charging
+Blink Fast (4.58Hz)      1        1         0    Temperature Fault/Bad Battery
+Blink Fast (4.58Hz)      1        1         1    Differential Undervoltage Current Limit (DUVCL)
 
-    // mbed buttons
-    BUTTON1 = AM_BSP_GPIO_BUTTON0,
+ACPR STAT1 STAT2    STATUS
+----+-----+------+--------------------------------------
+0       0   0       VBAT < 3.2V, Low Battery Alert 3
+0       0   1       3.2V < VBAT < 3.3V
+0       1   0       3.3V < VBAT < 3.6V
+0       1   1       VBAT > 3.6V
 
-    // LEDs
-    LED_RED = AM_BSP_GPIO_LED_RED,
-    LED_BLUE = AM_BSP_GPIO_LED_BLUE,
-    LED_GREEN = AM_BSP_GPIO_LED_GREEN,
-    LED_YELLOW = AM_BSP_GPIO_LED_YELLOW,
+*/
+    CHG_STAT_1 = 4 ,
+    CHG_STAT_2 = 24 ,
+    CHG_ACPR = 23 ,
+    CHG_OUT = 7, // This pin should be used only with DK, as a hack to make the stats pins provide output
 
-    // mbed original LED naming
+
+    IMU_SDA = 6 ,
+    IMU_SCL = 5 ,
+    IMU_VDD = 13 ,
+    IMU_INT1 = 10 ,
+    IMU_INT2 = 15 ,
+
+// Other defines
+
+
+     // mbed original LED naming
     LED1 = AM_BSP_GPIO_LED0,
     LED2 = AM_BSP_GPIO_LED1,
     LED3 = AM_BSP_GPIO_LED2,
@@ -82,6 +99,8 @@ typedef enum
 
 #define STDIO_UART_TX USBTX
 #define STDIO_UART_RX USBRX
+
+#define IMU_I2C_ADDR    0x68
 
 #ifdef __cplusplus
 }
