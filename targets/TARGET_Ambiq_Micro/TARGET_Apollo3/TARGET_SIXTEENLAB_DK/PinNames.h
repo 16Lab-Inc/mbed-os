@@ -67,6 +67,12 @@ ACPR STAT1 STAT2    STATUS
     IMU_INT1 = 10 ,
     IMU_INT2 = 15 ,
 
+    LRA_EN = 26, 
+    LRA_SDA = 9, 
+    LRA_SCL = 8, 
+    LRA_TRIG = 12, 
+
+
 // Other defines
 
 
@@ -101,6 +107,7 @@ ACPR STAT1 STAT2    STATUS
 #define STDIO_UART_RX USBRX
 
 #define IMU_I2C_ADDR    0x68
+#define HAPTIC_I2C_ADDR 0x5a
 
 #ifdef __cplusplus
 }
