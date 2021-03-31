@@ -7868,6 +7868,12 @@
             "ARMC6"
         ],
         "public": false,
+        "mbed_rom_start": "0x0000c000",
+        "mbed_rom_size": "0x000F4000",
+        "mbed_ram_start": "0x10000000",
+        "mbed_ram_size": "0x4000",
+        "bootloader_supported": true,
+        "device_name": "AMA3B1KK-KBR",
         "extra_labels": [
             "Ambiq_Micro",
             "Apollo3",

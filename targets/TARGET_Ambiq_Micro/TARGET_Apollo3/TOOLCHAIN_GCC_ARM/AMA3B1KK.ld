@@ -22,9 +22,7 @@
  */
 /* stack: dynamic */
 /* heap: dynamic */
-#define MBED_APP_START 0x0000C000
-#define MBED_APP_LENGTH 0x000F4000
-#define MBED_RAM_START 0x10000000
+//#define MBED_RAM_START 0x10000000
 #define MBED_RAM_SIZE   384K
 #define MBED_BOOT_STACK_SIZE 0x400
 #define MBED_RAM0_START MBED_RAM_START
@@ -36,7 +34,7 @@ ENTRY(Reset_Handler)
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = MBED_APP_START, LENGTH = MBED_APP_LENGTH /*Modified from 0xC000 to work with SparkFun SVL*/
+  FLASH (rx) : ORIGIN = MBED_APP_START, LENGTH = MBED_APP_SIZE /*Modified from 0xC000 to work with SparkFun SVL*/
   RAM_NVIC (rwx) : ORIGIN = MBED_RAM0_START, LENGTH = MBED_RAM0_SIZE
   RAM (rwx)      : ORIGIN = MBED_RAM1_START, LENGTH = MBED_RAM1_SIZE
 }
