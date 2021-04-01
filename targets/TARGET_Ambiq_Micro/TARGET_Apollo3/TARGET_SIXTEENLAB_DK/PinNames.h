@@ -35,38 +35,40 @@ extern "C"
 
 typedef enum
 {
-    CTRL_LED  =      29,
+    LED_CTRL  =      29,
+    LED_EN =    NC_VAL,
     DEBUG_P29_P9  =   45, /* GPIO45 connected to pin9 in header P29*/
 
 /*
-CHRG                     ACPR    STAT1   STAT2   STATUS
------------------------+--------+-------+------+----------------
-Hi-Impedance             0        X         X    Not Charging, No Power,
-Pulled LOW               1        0         0    Done Charging
-Blink Slow (1.14Hz)      1        0         1    Charging
-Blink Fast (4.58Hz)      1        1         0    Temperature Fault/Bad Battery
-Blink Fast (4.58Hz)      1        1         1    Differential Undervoltage Current Limit (DUVCL)
+        CHRG                     ACPR    STAT1   STAT2   STATUS
+        -----------------------+--------+-------+------+----------------
+        Hi-Impedance             0        X         X    Not Charging, No Power,
+        Pulled LOW               1        0         0    Done Charging
+        Blink Slow (1.14Hz)      1        0         1    Charging
+        Blink Fast (4.58Hz)      1        1         0    Temperature Fault/Bad Battery
+        Blink Fast (4.58Hz)      1        1         1    Differential Undervoltage Current Limit (DUVCL)
 
-ACPR STAT1 STAT2    STATUS
-----+-----+------+--------------------------------------
-0       0   0       VBAT < 3.2V, Low Battery Alert 3
-0       0   1       3.2V < VBAT < 3.3V
-0       1   0       3.3V < VBAT < 3.6V
-0       1   1       VBAT > 3.6V
-
+        ACPR STAT1 STAT2    STATUS
+        ----+-----+------+--------------------------------------
+        0       0   0       VBAT < 3.2V, Low Battery Alert 3
+        0       0   1       3.2V < VBAT < 3.3V
+        0       1   0       3.3V < VBAT < 3.6V
+        0       1   1       VBAT > 3.6V
 */
+    /* charger pins */
     CHG_STAT_1 = 4 ,
     CHG_STAT_2 = 24 ,
     CHG_ACPR = 23 ,
     CHG_OUT = 7, // This pin should be used only with DK, as a hack to make the stats pins provide output
 
-
+    /* IMU pins */
     IMU_SDA = 6 ,
     IMU_SCL = 5 ,
     IMU_VDD = 13 ,
     IMU_INT1 = 10 ,
     IMU_INT2 = 15 ,
 
+    /* LRA pins*/
     LRA_EN = 26, 
     LRA_SDA = 9, 
     LRA_SCL = 8, 
@@ -74,30 +76,16 @@ ACPR STAT1 STAT2    STATUS
 
 
 // Other defines
-
-
-     // mbed original LED naming
-    LED1 = AM_BSP_GPIO_LED0,
-    LED2 = AM_BSP_GPIO_LED1,
-    LED3 = AM_BSP_GPIO_LED2,
-    LED4 = AM_BSP_GPIO_LED3,
-
-    // I2C
-    I2C_SCL = AM_BSP_QWIIC_I2C_SCL_PIN,
-    I2C_SDA = AM_BSP_QWIIC_I2C_SDA_PIN,
-
-    // Qwiic
-    QWIIC_SCL = I2C_SCL,
-    QWIIC_SDA = I2C_SDA,
-
-    // SPI
-    // The SFE_EDGE does not expose a complete IOM peripheral for SPI
+    LED1 = NC_VAL,
+    LED2 = NC_VAL,
+    LED3 = NC_VAL,
+    LED4 = NC_VAL,
 
     // UART
-    SERIAL_TX = AM_BSP_PRIM_UART_TX_PIN,
-    SERIAL_RX = AM_BSP_PRIM_UART_RX_PIN,
-    USBTX = SERIAL_TX,
-    USBRX = SERIAL_RX,
+    SERIAL_TX = NC_VAL,
+    SERIAL_RX = NC_VAL,
+    USBTX = NC_VAL,
+    USBRX = NC_VAL,
 
     // Not connected
     NC = NC_VAL
