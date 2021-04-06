@@ -74,6 +74,12 @@ typedef enum
     LRA_SCL = 8, 
     LRA_TRIG = 12, 
 
+    /*Touch pins*/
+    TOUCH_RST = 14,
+    TOUCH_SDA = 40,
+    TOUCH_SCL = 39,
+    TOUCH_IRQ = 28,
+    TOUCH_VDD = 25,
 
 // Other defines
     LED1 = 0,
@@ -96,6 +102,7 @@ typedef enum
 
 #define IMU_I2C_ADDR    0x68
 #define HAPTIC_I2C_ADDR 0x5a
+#define TOUCH_I2C_ADDR 0x41
 
 #ifdef __cplusplus
 }
