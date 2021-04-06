@@ -76,7 +76,7 @@ typedef enum
 
 
 // Other defines
-    LED1 = NC_VAL,
+    LED1 = 0,
     LED2 = NC_VAL,
     LED3 = NC_VAL,
     LED4 = NC_VAL,

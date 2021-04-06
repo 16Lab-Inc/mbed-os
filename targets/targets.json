@@ -7877,7 +7877,8 @@
         "extra_labels": [
             "Ambiq_Micro",
             "Apollo3",
-            "CORDIO"
+            "CORDIO",
+            "CORDIO_LL"
         ],
         "device_has": [
             "MPU",
