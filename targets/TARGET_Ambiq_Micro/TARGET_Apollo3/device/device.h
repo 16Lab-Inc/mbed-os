@@ -36,6 +36,9 @@
 //=======================================
 #define DEVICE_ID_LENGTH 24
 
+#define CONSOLE_TX ((PinName)NC)
+#define CONSOLE_RX ((PinName)NC)
+
 #include "objects.h"
 #include "extensions.h"
 #include "us_ticker_defines.h"
