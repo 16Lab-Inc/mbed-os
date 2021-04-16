@@ -181,7 +181,7 @@ DirectSerial::DirectSerial(PinName tx, PinName rx, int baud)
         return;
     }
 
-    static const serial_pinmap_t console_pinmap = get_uart_pinmap(CONSOLE_TX, CONSOLE_RX);
+    static const serial_pinmap_t console_pinmap = get_uart_pinmap(NC, NC);
     serial_init_direct(&stdio_uart, &console_pinmap);
     serial_baud(&stdio_uart, baud);
 

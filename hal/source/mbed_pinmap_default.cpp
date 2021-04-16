@@ -69,6 +69,7 @@ const char *pinmap_ff_arduino_uno_pin_to_string(PinName pin)
 //*** Default restricted pins ***
 MBED_WEAK const PinList *pinmap_restricted_pins()
 {
+#if 0
     static const PinName pins[] = {
         CONSOLE_TX, CONSOLE_RX
     };
@@ -77,6 +78,7 @@ MBED_WEAK const PinList *pinmap_restricted_pins()
         pins
     };
     return &pin_list;
+#endif
 }
 
 //*** Default restricted gpio pins ***
@@ -94,6 +96,7 @@ MBED_WEAK const PinList *pinmap_gpio_restricted_pins()
 #if DEVICE_SERIAL
 MBED_WEAK const PeripheralList *pinmap_uart_restricted_peripherals()
 {
+#if 0
     static const int stdio_uart = pinmap_peripheral(CONSOLE_TX, serial_tx_pinmap());
 
     static const int peripherals[] = {
@@ -105,5 +108,6 @@ MBED_WEAK const PeripheralList *pinmap_uart_restricted_peripherals()
         peripherals
     };
     return &peripheral_list;
+#endif
 }
 #endif

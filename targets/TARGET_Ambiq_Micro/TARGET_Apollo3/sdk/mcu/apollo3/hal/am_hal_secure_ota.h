@@ -13,7 +13,7 @@
 
 //*****************************************************************************
 //
-// Copyright (c) 2020, Ambiq Micro
+// Copyright (c) 2020, Ambiq Micro, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 2.4.2 of the AmbiqSuite Development Package.
+// This is part of revision 2.5.1 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
-// SPDX-License-Identifier: BSD-3-Clause
 
 #ifndef AM_HAL_SECURE_OTA_H
 #define AM_HAL_SECURE_OTA_H
@@ -210,11 +209,6 @@ typedef struct
     am_hal_ota_status_e status;
 } am_hal_ota_status_t;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 // pOtaDesc should be start of a flash page designated for OTA Descriptor
 // This call will erase the flash page, which will then be incrementally populated as OTA's are added
 // It will also initialize the OTAPOINTER to point to this descriptor, with LSB indicating it as invalid
@@ -229,9 +223,5 @@ uint32_t am_hal_ota_add(uint32_t ui32ProgamKey, uint8_t imageMagic, uint32_t *pI
 // Can be called anytime (generally after coming back from reset to check the status of OTA
 // Will be also used by sbl_main to identify list of OTA's left for it (would show up as PENDING)
 uint32_t am_hal_get_ota_status(uint32_t *pOtaDesc, uint32_t maxOta, am_hal_ota_status_t *pStatus);
-    
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // AM_HAL_SECURE_OTA_H

@@ -3,12 +3,22 @@
 //! @file am_util_stdio.h
 //!
 //! @brief A few printf-style functions for use with Ambiq products
+//!
+//! Functions for performing printf-style operations without dynamic memory
+//! allocation.
+//!
+//! For further information about this module concerning its history, uses,
+//! and limitations, please see the Ambiq Micro KB article "Q&A: What does
+//! the AmbiqSuite SDK am_util_stdio_printf() function do?" at:
+//!
+//! https://support.ambiqmicro.com/hc/en-us/articles/360040441631
+//!
 //
 //*****************************************************************************
 
 //*****************************************************************************
 //
-// Copyright (c) 2020, Ambiq Micro
+// Copyright (c) 2020, Ambiq Micro, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,10 +50,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 2.4.2 of the AmbiqSuite Development Package.
+// This is part of revision 2.5.1 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
-// SPDX-License-Identifier: BSD-3-Clause
 #ifndef AM_UTIL_STDIO_H
 #define AM_UTIL_STDIO_H
 
@@ -62,7 +71,7 @@ extern "C"
 
 // buffer size for printf
 #ifndef AM_PRINTF_BUFSIZE
-#define AM_PRINTF_BUFSIZE              256
+#define AM_PRINTF_BUFSIZE       256   // Global printf buffer size
 #endif
 
 typedef void (*am_util_stdio_print_char_t)(char *pcStr);

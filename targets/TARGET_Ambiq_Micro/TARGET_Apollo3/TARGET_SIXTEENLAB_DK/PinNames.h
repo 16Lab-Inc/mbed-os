@@ -92,6 +92,9 @@ typedef enum
     SERIAL_RX = NC_VAL,
     USBTX = NC_VAL,
     USBRX = NC_VAL,
+    
+//    CONSOLE_TX = NC_VAL,
+//    CONSOLE_RX = NC_VAL,
 
     // Not connected
     NC = NC_VAL

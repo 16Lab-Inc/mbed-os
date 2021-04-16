@@ -13,7 +13,7 @@
 
 //*****************************************************************************
 //
-// Copyright (c) 2020, Ambiq Micro
+// Copyright (c) 2020, Ambiq Micro, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,19 +45,30 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 2.4.2 of the AmbiqSuite Development Package.
+// This is part of revision 2.5.1 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
-// SPDX-License-Identifier: BSD-3-Clause
 
 #include <stdint.h>
 #include <stdbool.h>
 #include "am_mcu_apollo.h"
 
+//*****************************************************************************
+//
+//  Defines
+//
+//*****************************************************************************
 //
 // Maximum number of checks to memory power status before declaring error.
 //
-#define AM_HAL_PWRCTRL_MAX_WFE  20
+#define AM_HAL_PWRCTRL_MAX_WAIT     20
+
+//*****************************************************************************
+//
+//  Globals
+//
+//*****************************************************************************
+bool g_bSimobuckTrimsDone = false;
 
 //
 // Define the peripheral control structure.
@@ -68,6 +79,7 @@ const struct
     uint32_t      ui32PeriphStatus;
     uint32_t      ui32PeriphEvent;
 }
+
 am_hal_pwrctrl_peripheral_control[AM_HAL_PWRCTRL_PERIPH_MAX] =
 {
     {0, 0, 0},                                  //  AM_HAL_PWRCTRL_PERIPH_NONE
@@ -115,7 +127,6 @@ am_hal_pwrctrl_peripheral_control[AM_HAL_PWRCTRL_PERIPH_MAX] =
      _VAL2FLD(PWRCTRL_DEVPWREVENTEN_BLELEVEN, PWRCTRL_DEVPWREVENTEN_BLELEVEN_EN)}   //  AM_HAL_PWRCTRL_PERIPH_BLEL
 };
 
-
 //
 // Define the memory control structure.
 //
@@ -128,6 +139,7 @@ const struct
     uint32_t      ui32StatusMask;
     uint32_t      ui32PwdSlpEnable;
 }
+
 am_hal_pwrctrl_memory_control[AM_HAL_PWRCTRL_MEM_MAX] =
 {
     {0, 0, 0, 0, 0, 0},
@@ -244,8 +256,6 @@ am_hal_pwrctrl_memory_control[AM_HAL_PWRCTRL_MEM_MAX] =
 uint32_t
 am_hal_pwrctrl_periph_enable(am_hal_pwrctrl_periph_e ePeripheral)
 {
-
-
     //
     // Enable power control for the given device.
     //
@@ -253,10 +263,7 @@ am_hal_pwrctrl_periph_enable(am_hal_pwrctrl_periph_e ePeripheral)
     PWRCTRL->DEVPWREN |= am_hal_pwrctrl_peripheral_control[ePeripheral].ui32PeriphEnable;
     AM_CRITICAL_END
 
-
-
-
-    for (uint32_t wait_usecs = 0; wait_usecs < AM_HAL_PWRCTRL_MAX_WFE; wait_usecs += 10)
+    for (uint32_t wait_usecs = 0; wait_usecs < AM_HAL_PWRCTRL_MAX_WAIT; wait_usecs += 10)
     {
         am_hal_flash_delay(FLASH_CYCLES_US(10));
 
@@ -278,7 +285,7 @@ am_hal_pwrctrl_periph_enable(am_hal_pwrctrl_periph_e ePeripheral)
         return AM_HAL_STATUS_FAIL;
     }
 
-}
+} // am_hal_pwrctrl_periph_enable()
 
 // ****************************************************************************
 //
@@ -289,7 +296,6 @@ am_hal_pwrctrl_periph_enable(am_hal_pwrctrl_periph_e ePeripheral)
 uint32_t
 am_hal_pwrctrl_periph_disable(am_hal_pwrctrl_periph_e ePeripheral)
 {
-
     //
     // Disable power domain for the given device.
     //
@@ -297,8 +303,7 @@ am_hal_pwrctrl_periph_disable(am_hal_pwrctrl_periph_e ePeripheral)
     PWRCTRL->DEVPWREN &= ~am_hal_pwrctrl_peripheral_control[ePeripheral].ui32PeriphEnable;
     AM_CRITICAL_END
 
-
-    for (uint32_t wait_usecs = 0; wait_usecs < AM_HAL_PWRCTRL_MAX_WFE; wait_usecs += 10)
+    for (uint32_t wait_usecs = 0; wait_usecs < AM_HAL_PWRCTRL_MAX_WAIT; wait_usecs += 10)
     {
         am_hal_flash_delay(FLASH_CYCLES_US(10));
 
@@ -319,7 +324,8 @@ am_hal_pwrctrl_periph_disable(am_hal_pwrctrl_periph_e ePeripheral)
     {
         return AM_HAL_STATUS_FAIL;
     }
-}
+
+} // am_hal_pwrctrl_periph_disable()
 
 //*****************************************************************************
 //
@@ -390,9 +396,8 @@ am_hal_pwrctrl_periph_enabled(am_hal_pwrctrl_periph_e ePeripheral,
     *pui32Enabled = ui32Enabled;
 
     return AM_HAL_STATUS_SUCCESS;
-}
 
-
+} // am_hal_pwrctrl_periph_enabled()
 
 // ****************************************************************************
 //
@@ -426,7 +431,6 @@ am_hal_pwrctrl_memory_enable(am_hal_pwrctrl_mem_e eMemConfig)
         am_hal_flash_delay(FLASH_CYCLES_US(1));
     }
 
-
     //
     // Enable the required memory.
     //
@@ -434,7 +438,7 @@ am_hal_pwrctrl_memory_enable(am_hal_pwrctrl_mem_e eMemConfig)
     {
         PWRCTRL->MEMPWREN |= ui32MemEnMask;
 
-        for (uint32_t wait_usecs = 0; wait_usecs < AM_HAL_PWRCTRL_MAX_WFE; wait_usecs += 10)
+        for (uint32_t wait_usecs = 0; wait_usecs < AM_HAL_PWRCTRL_MAX_WAIT; wait_usecs += 10)
         {
             am_hal_flash_delay(FLASH_CYCLES_US(10));
 
@@ -458,7 +462,8 @@ am_hal_pwrctrl_memory_enable(am_hal_pwrctrl_mem_e eMemConfig)
     {
         return AM_HAL_STATUS_FAIL;
     }
-}
+
+} // am_hal_pwrctrl_memory_enable()
 
 // ****************************************************************************
 //
@@ -480,7 +485,8 @@ am_hal_pwrctrl_memory_deepsleep_powerdown(am_hal_pwrctrl_mem_e eMemConfig)
     PWRCTRL->MEMPWDINSLEEP |= am_hal_pwrctrl_memory_control[eMemConfig].ui32PwdSlpEnable;
 
     return AM_HAL_STATUS_SUCCESS;
-}
+
+} // am_hal_pwrctrl_memory_deepsleep_powerdown()
 
 // ****************************************************************************
 //
@@ -502,7 +508,39 @@ am_hal_pwrctrl_memory_deepsleep_retain(am_hal_pwrctrl_mem_e eMemConfig)
     PWRCTRL->MEMPWDINSLEEP &= ~am_hal_pwrctrl_memory_control[eMemConfig].ui32PwdSlpEnable;
 
     return AM_HAL_STATUS_SUCCESS;
-}
+
+} // am_hal_pwrctrl_memory_deepsleep_retain()
+
+// ****************************************************************************
+//  simobuck_updates()
+// ****************************************************************************
+static void
+simobuck_updates(void)
+{
+    //
+    // Adjust the SIMOBUCK LP settings.
+    //
+    if ( APOLLO3_GE_B0 )
+    {
+        MCUCTRL->SIMOBUCK2_b.SIMOBUCKCORELPHIGHTONTRIM  = 2;
+        MCUCTRL->SIMOBUCK2_b.SIMOBUCKCORELPLOWTONTRIM   = 3;
+        MCUCTRL->SIMOBUCK3_b.SIMOBUCKCORELPHIGHTOFFTRIM = 5;
+        MCUCTRL->SIMOBUCK3_b.SIMOBUCKCORELPLOWTOFFTRIM  = 2;
+        MCUCTRL->SIMOBUCK3_b.SIMOBUCKMEMLPHIGHTOFFTRIM  = 6;
+        MCUCTRL->SIMOBUCK3_b.SIMOBUCKMEMLPLOWTOFFTRIM   = 1;
+        MCUCTRL->SIMOBUCK3_b.SIMOBUCKMEMLPHIGHTONTRIM   = 3;
+        MCUCTRL->SIMOBUCK4_b.SIMOBUCKMEMLPLOWTONTRIM    = 3;
+    }
+
+    //
+    // Adjust the SIMOBUCK Timeout settings.
+    //
+    if ( APOLLO3_GE_A1 )
+    {
+        MCUCTRL->SIMOBUCK4_b.SIMOBUCKCOMP2TIMEOUTEN = 0;
+    }
+
+} // simobuck_updates()
 
 // ****************************************************************************
 //
@@ -518,7 +556,7 @@ am_hal_pwrctrl_low_power_init(void)
     //
     // Take a snapshot of the reset status, if not done already
     //
-    if (!gAmHalResetStatus)
+    if ( !gAmHalResetStatus )
     {
         gAmHalResetStatus = RSTGEN->STAT;
     }
@@ -528,35 +566,17 @@ am_hal_pwrctrl_low_power_init(void)
     //
     if ((APOLLO3_A1) && (1 == PWRCTRL->SUPPLYSTATUS_b.SIMOBUCKON))
     {
-      ui32Status = am_hal_pwrctrl_periph_enable(AM_HAL_PWRCTRL_PERIPH_PDM);
-      if (AM_HAL_STATUS_SUCCESS != ui32Status)
-      {
-        return ui32Status;
-      }
+        ui32Status = am_hal_pwrctrl_periph_enable(AM_HAL_PWRCTRL_PERIPH_PDM);
+        if (AM_HAL_STATUS_SUCCESS != ui32Status)
+        {
+            return ui32Status;
+        }
     }
 
     //
     // Adjust the SIMOBUCK LP settings.
     //
-    if (APOLLO3_GE_B0)
-    {
-        MCUCTRL->SIMOBUCK2_b.SIMOBUCKCORELPHIGHTONTRIM  = 2;
-        MCUCTRL->SIMOBUCK2_b.SIMOBUCKCORELPLOWTONTRIM   = 3;
-        MCUCTRL->SIMOBUCK3_b.SIMOBUCKCORELPHIGHTOFFTRIM = 5;
-        MCUCTRL->SIMOBUCK3_b.SIMOBUCKCORELPLOWTOFFTRIM  = 2;
-        MCUCTRL->SIMOBUCK3_b.SIMOBUCKMEMLPHIGHTOFFTRIM  = 6;
-        MCUCTRL->SIMOBUCK3_b.SIMOBUCKMEMLPLOWTOFFTRIM   = 1;
-        MCUCTRL->SIMOBUCK3_b.SIMOBUCKMEMLPHIGHTONTRIM   = 3;
-        MCUCTRL->SIMOBUCK4_b.SIMOBUCKMEMLPLOWTONTRIM    = 3;
-    }
-
-    //
-    // Adjust the SIMOBUCK Timeout settings.
-    //
-    if (APOLLO3_GE_A1)
-    {
-        MCUCTRL->SIMOBUCK4_b.SIMOBUCKCOMP2TIMEOUTEN = 0;
-    }
+    simobuck_updates();
 
     //
     // Configure cache for low power and performance.
@@ -568,6 +588,8 @@ am_hal_pwrctrl_low_power_init(void)
     //
     if ( PWRCTRL->DEVPWRSTATUS_b.BLEL == 0)
     {
+        am_hal_pwrctrl_blebuck_trim();
+
         //
         // First request the BLE feature and check that it was available and acknowledged.
         //
@@ -575,8 +597,8 @@ am_hal_pwrctrl_low_power_init(void)
         ui32Status = am_hal_flash_delay_status_check(10000,
                         (uint32_t)&MCUCTRL->FEATUREENABLE,
                         (MCUCTRL_FEATUREENABLE_BLEAVAIL_Msk |
-                          MCUCTRL_FEATUREENABLE_BLEACK_Msk  |
-                          MCUCTRL_FEATUREENABLE_BLEREQ_Msk),
+                         MCUCTRL_FEATUREENABLE_BLEACK_Msk   |
+                         MCUCTRL_FEATUREENABLE_BLEREQ_Msk),
                         (MCUCTRL_FEATUREENABLE_BLEAVAIL_Msk |
                          MCUCTRL_FEATUREENABLE_BLEACK_Msk   |
                          MCUCTRL_FEATUREENABLE_BLEREQ_Msk),
@@ -612,8 +634,13 @@ am_hal_pwrctrl_low_power_init(void)
     }
 
     return AM_HAL_STATUS_SUCCESS;
-}
+} // am_hal_pwrctrl_low_power_init()
 
+// ****************************************************************************
+//
+//  am_hal_pwrctrl_blebuck_trim()
+//
+// ****************************************************************************
 void am_hal_pwrctrl_blebuck_trim(void)
 {
   //
@@ -627,8 +654,7 @@ void am_hal_pwrctrl_blebuck_trim(void)
     CLKGEN->BLEBUCKTONADJ_b.TONADJUSTEN = CLKGEN_BLEBUCKTONADJ_TONADJUSTEN_DIS;
     AM_CRITICAL_END
   }
-
-}
+} // am_hal_pwrctrl_blebuck_trim()
 
 //*****************************************************************************
 //

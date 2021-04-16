@@ -8,7 +8,7 @@
 
 //*****************************************************************************
 //
-// Copyright (c) 2020, Ambiq Micro
+// Copyright (c) 2020, Ambiq Micro, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 //*****************************************************************************
-// SPDX-License-Identifier: BSD-3-Clause
 
 #include <stdint.h>
 #include "system_apollo3.h"

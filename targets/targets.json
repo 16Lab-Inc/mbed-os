@@ -7924,8 +7924,7 @@
         "extra_labels": [
             "Ambiq_Micro",
             "Apollo3",
-            "CORDIO",
-            "CORDIO_LL"
+            "CORDIO"
         ],
         "device_has": [
             "MPU",
@@ -7945,7 +7944,8 @@
         "macros": [
             "CORDIO_ZERO_COPY_HCI",
             "USE_AMBIQ_DRIVER",
-            "MBED_TICKLESS"
+            "MBED_TICKLESS",
+            "AM_PART_APOLLO3"
         ],
         "supported_application_profiles" : ["full", "bare-metal"],
         "supported_c_libs": {
