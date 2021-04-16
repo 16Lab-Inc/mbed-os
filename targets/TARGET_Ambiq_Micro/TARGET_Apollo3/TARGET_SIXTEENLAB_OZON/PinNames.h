@@ -35,7 +35,7 @@ extern "C"
 
 typedef enum
 {
-    CTRL_LED  =      27,
+    LED_CTRL  =      27,
 
 /*
 CHRG                     ACPR    STAT1   STAT2   STATUS
@@ -57,6 +57,7 @@ ACPR STAT1 STAT2    STATUS
     CHG_STAT_1 = 32 ,
     CHG_STAT_2 = 30 ,
     CHG_ACPR = 34 ,
+    CHG_OUT = 31,
 
 
     IMU_SDA = 6 ,
@@ -68,25 +69,31 @@ ACPR STAT1 STAT2    STATUS
     LRA_EN = 44, 
     LRA_SDA = 9, 
     LRA_SCL = 8, 
-    LRA_TRIG = 38, 
+    LRA_TRIG = 38,
+
+    TOUCH_IRQ = 3,
+    TOUCH_VDD = 25,
+    TOUCH_SCL = 39,
+    TOUCH_SDA = 40,
+    TOUCH_RST = 45,
 
 
 // Other defines
 
 
      // mbed original LED naming
-    LED1 = AM_BSP_GPIO_LED0,
-    LED2 = AM_BSP_GPIO_LED1,
-    LED3 = AM_BSP_GPIO_LED2,
-    LED4 = AM_BSP_GPIO_LED3,
+    LED1 = NC_VAL,
+    LED2 = NC_VAL,
+    LED3 = NC_VAL,
+    LED4 = NC_VAL,
 
     // I2C
-    I2C_SCL = AM_BSP_QWIIC_I2C_SCL_PIN,
-    I2C_SDA = AM_BSP_QWIIC_I2C_SDA_PIN,
+    I2C_SCL = NC_VAL,
+    I2C_SDA = NC_VAL,
 
     // Qwiic
-    QWIIC_SCL = I2C_SCL,
-    QWIIC_SDA = I2C_SDA,
+    QWIIC_SCL = NC_VAL,
+    QWIIC_SDA = NC_VAL,
 
     // SPI
     // The SFE_EDGE does not expose a complete IOM peripheral for SPI
@@ -106,6 +113,7 @@ ACPR STAT1 STAT2    STATUS
 
 #define IMU_I2C_ADDR    0x68
 #define HAPTIC_I2C_ADDR 0x5a
+#define TOUCH_I2C_ADDR  0x41
 
 #ifdef __cplusplus
 }
