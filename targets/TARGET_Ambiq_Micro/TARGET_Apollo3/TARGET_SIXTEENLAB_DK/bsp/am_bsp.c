@@ -61,6 +61,13 @@
 //*****************************************************************************
 am_bsp_uart_pwrsave_t am_bsp_uart_pwrsave[AM_REG_UART_NUM_MODULES];
 
+//*****************************************************************************
+//
+// Print interface tracking variable.
+//
+//*****************************************************************************
+static uint32_t g_ui32PrintInterface = AM_BSP_PRINT_INFC_NONE;
+
 
 //*****************************************************************************
 //
@@ -140,17 +147,45 @@ am_bsp_debug_printf_disable(void)
 // @brief Enable printing over ITM.
 //
 //*****************************************************************************
+//*****************************************************************************
+//
+// @brief Enable printing over ITM.
+//
+//*****************************************************************************
+#ifdef DEBUG_SWO
 void
-#ifdef AM_BSP_GPIO_ITM_SWO
 am_bsp_itm_printf_enable(void)
-#else
-am_bsp_itm_printf_enable(uint32_t ui32Pin, am_hal_gpio_pincfg_t sPincfg)
-#endif
 {
-    return;
+    am_hal_tpiu_config_t TPIUcfg;
 
+    //
+    // Set the global print interface.
+    //
+    g_ui32PrintInterface = AM_BSP_PRINT_INFC_SWO;
+
+    //
+    // Enable the ITM interface and the SWO pin.
+    //
+    am_hal_itm_enable();
+//  am_hal_gpio_pinconfig(AM_BSP_GPIO_ITM_SWO, g_AM_BSP_GPIO_ITM_SWO);
+
+    //
+    // Enable the ITM and TPIU
+    // Set the BAUD clock for 1M
+    //
+    TPIUcfg.ui32SetItmBaud = AM_HAL_TPIU_BAUD_1M;
+    am_hal_tpiu_enable(&TPIUcfg);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_ITM_SWO, g_AM_BSP_GPIO_ITM_SWO);
+
+    //
+    // Attach the ITM to the STDIO driver.
+    //
+    am_util_stdio_printf_init(am_hal_itm_print);
 } // am_bsp_itm_printf_enable()
-
+#else
+void
+am_bsp_itm_printf_enable(void);
+#endif
 //*****************************************************************************
 //
 //! @brief ITM-based string print function.
