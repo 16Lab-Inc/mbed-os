@@ -8,7 +8,7 @@
 
 //*****************************************************************************
 //
-// Copyright (c) 2020, Ambiq Micro
+// Copyright (c) 2020, Ambiq Micro, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,11 +40,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 2.4.2 of the AmbiqSuite Development Package.
+// This is part of revision 2.5.1 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
-// SPDX-License-Identifier: BSD-3-Clause
-#if USE_AMBIQ_DRIVER
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -54,23 +52,24 @@
 #include "bstream.h"
 #include "wsf_msg.h"
 #include "wsf_cs.h"
+#include "hci_drv.h"
+#include "hci_drv_apollo.h"
+#include "hci_tr_apollo.h"
 #include "hci_core.h"
 #include "dm_api.h"
+
 #include "am_mcu_apollo.h"
 #include "am_util.h"
 #include "hci_drv_apollo3.h"
 
 #include <string.h>
-#include "stdio.h"
-
-extern void CordioHCITransportDriver_on_data_received(uint8_t *data, uint16_t len);
 
 //*****************************************************************************
 //
 // Use the interrupt-driven HCI driver?
 //
 //*****************************************************************************
-#define USE_NONBLOCKING_HCI             1
+#define USE_NONBLOCKING_HCI             0
 #define SKIP_FALLING_EDGES              0
 
 //*****************************************************************************
@@ -102,7 +101,7 @@ extern void CordioHCITransportDriver_on_data_received(uint8_t *data, uint16_t le
 #define HCI_DRV_MAX_IRQ_TIMEOUT          2000
 #define HCI_DRV_MAX_XTAL_RETRIES         10
 #define HCI_DRV_MAX_TX_RETRIES           10000
-#define HCI_DRV_MAX_HCI_TRANSACTIONS     10000
+#define HCI_DRV_MAX_HCI_TRANSACTIONS     1000
 #define HCI_DRV_MAX_READ_PACKET          4   // max read in a row at a time
 
 //*****************************************************************************
@@ -145,6 +144,23 @@ hci_drv_write_t;
 
 #endif
 
+#define delay_us(us)        am_hal_flash_delay(FLASH_CYCLES_US(us))
+#define WHILE_TIMEOUT_MS_BREAK(expr, timeout, error)                                \
+    {                                                                         \
+        uint32_t ui32Timeout = 0;                                             \
+        while (expr)                                                          \
+        {                                                                     \
+            if (ui32Timeout >= (timeout * 1000))                              \
+            {                                                                 \
+                break;                                                 \
+            }                                                                 \
+                                                                              \
+            delay_us(1);                                                      \
+            ui32Timeout++;                                                    \
+        }                                                                     \
+    }
+
+
 //*****************************************************************************
 //
 // Global variables.
@@ -154,8 +170,7 @@ hci_drv_write_t;
 // BLE module handle
 void *BLE;
 
-//fixme: set the BLE MAC address to a special value
-uint8_t g_BLEMacAddress[6] = {0x01,0x02,0x03,0x04,0x05,0x06};
+uint8_t g_BLEMacAddress[6] = {0};
 
 // Global handle used to send BLE events about the Hci driver layer.
 wsfHandlerId_t g_HciDrvHandleID = 0;
@@ -202,14 +217,14 @@ void hciDrvReadCallback(uint8_t *pui8Data, uint32_t ui32Length, void *pvContext)
 // Error-handling wrapper macro.
 //
 //*****************************************************************************
-#define ERROR_CHECK_VOID(status)                                              \
+#define ERROR_CHECK(status)                                              \
     {                                                                         \
         uint32_t ui32ErrChkStatus;                                            \
         if (0 != (ui32ErrChkStatus = (status)))                               \
         {                                                                     \
-            am_util_debug_printf("ERROR_CHECK_VOID "#status "\n");            \
+            am_util_debug_printf("ERROR_CHECK "#status "\n");            \
             error_check(ui32ErrChkStatus);                                    \
-            return;                                                           \
+            return AM_HAL_STATUS_FAIL;                                                           \
         }                                                                     \
     }
 
@@ -246,9 +261,6 @@ void hciDrvReadCallback(uint8_t *pui8Data, uint32_t ui32Length, void *pvContext)
         AM_CRITICAL_END;                                                      \
     } while (0)
 #else
-#if 0
-#define CRITICAL_PRINT(...) printf(__VA_ARGS__);
-#endif
 #define CRITICAL_PRINT(...)
 #endif
 
@@ -314,7 +326,7 @@ error_check(uint32_t ui32Status)
 // Boot the radio.
 //
 //*****************************************************************************
-void
+uint32_t
 HciDrvRadioBoot(bool bColdBoot)
 {
     uint32_t ui32NumXtalRetries = 0;
@@ -378,8 +390,8 @@ HciDrvRadioBoot(bool bColdBoot)
     uint32_t ui32Status = AM_HAL_STATUS_FAIL;
     while (ui32Status != AM_HAL_STATUS_SUCCESS)
     {
-        ERROR_CHECK_VOID(am_hal_ble_initialize(0, &BLE));
-        ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_ACTIVE));
+        ERROR_CHECK(am_hal_ble_initialize(0, &BLE));
+        ERROR_CHECK(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_ACTIVE));
 
         am_hal_ble_config_t sBleConfig =
         {
@@ -392,7 +404,9 @@ HciDrvRadioBoot(bool bColdBoot)
 
             // The MCU will supply the clock to the BLE core.
             .ui32BleClockConfig = AM_HAL_BLE_CORE_MCU_CLK,
-#if 0
+
+#if defined(AM_PART_APOLLO3)
+            // Note: These settings only apply to Apollo3 A1/A2 silicon, not B0 silicon.
             // Default settings for expected BLE clock drift (measured in PPM).
             .ui32ClockDrift = 0,
             .ui32SleepClockDrift = 50,
@@ -407,7 +421,7 @@ HciDrvRadioBoot(bool bColdBoot)
             .bUseDefaultPatches = true,
         };
 
-        ERROR_CHECK_VOID(am_hal_ble_config(BLE, &sBleConfig));
+        ERROR_CHECK(am_hal_ble_config(BLE, &sBleConfig));
         //
         // Delay 1s for 32768Hz clock stability. This isn't required unless this is
         // our first run immediately after a power-up.
@@ -437,8 +451,8 @@ HciDrvRadioBoot(bool bColdBoot)
             // If the radio is running, but the clock looks bad, we can try to
             // restart.
             //
-            ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
-            ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
+            ERROR_CHECK(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
+            ERROR_CHECK(am_hal_ble_deinitialize(BLE));
 
             //
             // We won't restart forever. After we hit the maximum number of
@@ -450,19 +464,19 @@ HciDrvRadioBoot(bool bColdBoot)
             }
             else
             {
-                return;
+                return AM_HAL_STATUS_FAIL;
             }
         }
         else
         {
-            ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
-            ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
+            ERROR_CHECK(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
+            ERROR_CHECK(am_hal_ble_deinitialize(BLE));
             //
             // If the radio failed for some reason other than 32K Clock
             // instability, we should just report the failure and return.
             //
             error_check(ui32Status);
-            return;
+            return AM_HAL_STATUS_FAIL;
         }
     }
 
@@ -511,7 +525,6 @@ HciDrvRadioBoot(bool bColdBoot)
     CRITICAL_PRINT("INTEN:  %d\n", BLEIF->INTEN_b.BLECSSTAT);
     CRITICAL_PRINT("INTENREG:  %d\n", BLEIF->INTEN);
 
-    NVIC_SetVector(BLE_IRQn, HciDrvIntService);
     NVIC_EnableIRQ(BLE_IRQn);
 
     //
@@ -519,13 +532,25 @@ HciDrvRadioBoot(bool bColdBoot)
     //
     am_hal_queue_from_array(&g_sWriteQueue, g_psWriteBuffers);
 
-    //WsfSetEvent(g_HciDrvHandleID, BLE_HEARTBEAT_EVENT);
     //
     // Reset the RX interrupt counter.
     //
     g_ui32InterruptsSeen = 0;
 
-    return;
+    // When it's bColdBoot, it will use Apollo's Device ID to form Bluetooth address.
+    if (bColdBoot)
+    {
+        am_hal_mcuctrl_device_t sDevice;
+        am_hal_mcuctrl_info_get(AM_HAL_MCUCTRL_INFO_DEVICEID, &sDevice);
+
+        // Bluetooth address formed by ChipID1 (32 bits) and ChipID0 (8-23 bits).
+        memcpy(g_BLEMacAddress, &sDevice.ui32ChipID1, sizeof(sDevice.ui32ChipID1));
+        // ui32ChipID0 bit 8-31 is test time during chip manufacturing
+        g_BLEMacAddress[4] = (sDevice.ui32ChipID0 >> 8) & 0xFF;
+        g_BLEMacAddress[5] = (sDevice.ui32ChipID0 >> 16) & 0xFF;
+    }
+
+    return AM_HAL_STATUS_SUCCESS;
 }
 
 //*****************************************************************************
@@ -540,13 +565,12 @@ HciDrvRadioShutdown(void)
 
     NVIC_DisableIRQ(BLE_IRQn);
 
-    ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
+    am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF);
 
-    while ( PWRCTRL->DEVPWREN_b.PWRBLEL )
-    {
-    }
+    // wait for 1s at max
+    WHILE_TIMEOUT_MS_BREAK(PWRCTRL->DEVPWREN_b.PWRBLEL, 1000, 0);
 
-    ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
+    am_hal_ble_deinitialize(BLE);
 
     g_ui32NumBytes   = 0;
     g_consumed_bytes = 0;
@@ -595,7 +619,7 @@ update_wake(void)
 //
 //*****************************************************************************
 uint16_t
-ap3_hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
+hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
 {
     uint8_t *pui8Wptr;
     hci_drv_write_t *psWriteBuffer;
@@ -656,28 +680,6 @@ ap3_hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
     //
     WsfSetEvent(g_HciDrvHandleID, BLE_TRANSFER_NEEDED_EVENT);
 #endif
-
-#ifdef AM_CUSTOM_BDADDR
-    if (type == HCI_CMD_TYPE)
-    {
-        uint16_t opcode;
-        BYTES_TO_UINT16(opcode, pData);
-
-        if (HCI_OPCODE_RESET == opcode)
-        {
-
-            extern uint8_t g_BLEMacAddress[6];
-            am_hal_mcuctrl_device_t sDevice;
-            am_hal_mcuctrl_info_get(AM_HAL_MCUCTRL_INFO_DEVICEID, &sDevice);
-            g_BLEMacAddress[0] = sDevice.ui32ChipID0;
-            g_BLEMacAddress[1] = sDevice.ui32ChipID0 >> 8;
-            g_BLEMacAddress[2] = sDevice.ui32ChipID0 >> 16;
-
-            HciVendorSpecificCmd(0xFC32, 6, g_BLEMacAddress);
-        }
-    }
-#endif
-
     return len;
 }
 
@@ -741,13 +743,13 @@ HciDrvIntService(void)
     //
     if (ui32Status & AM_HAL_BLE_INT_BLECIRQ)
     {
-        // CRITICAL_PRINT("INFO: IRQ INTERRUPT\n");
+        CRITICAL_PRINT("INFO: IRQ INTERRUPT\n");
 
         //
         // Lower WAKE
         //
         //WsfTimerStop(&g_WakeTimer);
-        // CRITICAL_PRINT("IRQ Drop\n");
+        CRITICAL_PRINT("IRQ Drop\n");
         am_hal_ble_wakeup_set(BLE, 0);
 
         //
@@ -757,7 +759,7 @@ HciDrvIntService(void)
     }
     else if (ui32Status & AM_HAL_BLE_INT_BLECSSTAT)
     {
-        // CRITICAL_PRINT("INFO: STATUS INTERRUPT\n");
+        CRITICAL_PRINT("INFO: STATUS INTERRUPT\n");
 
         //
         // Check the queue and send the first message we have.
@@ -782,11 +784,11 @@ HciDrvIntService(void)
             if (ui32WriteStatus == AM_HAL_STATUS_SUCCESS)
             {
                 BLE_HEARTBEAT_RESTART();
-                // CRITICAL_PRINT("INFO: HCI write sent.\n");
+                CRITICAL_PRINT("INFO: HCI write sent.\n");
             }
             else
             {
-                // CRITICAL_PRINT("INFO: HCI write failed: %d\n", ui32WriteStatus);
+                CRITICAL_PRINT("INFO: HCI write failed: %d\n", ui32WriteStatus);
             }
         }
     }
@@ -807,6 +809,7 @@ HciDrvIntService(void)
 #if AM_DEBUG_BLE_TIMING
     am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_CLEAR);
 #endif
+
 }
 
 #if USE_NONBLOCKING_HCI
@@ -899,8 +902,10 @@ hciDrvReadCallback(uint8_t *pui8Data, uint32_t ui32Length, void *pvContext)
 void
 HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
 {
-    uint32_t ui32ErrorStatus;
- 
+    uint32_t ui32ErrorStatus, ui32TxRetries = 0;
+    uint32_t ui32NumHciTransactions = 0;
+    uint32_t read_hci_packet_count = 0;
+
     //
     // If this handler was called in response to a heartbeat event, then it's
     // time to run a benign HCI command. Normally, the BLE controller should
@@ -936,11 +941,8 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
         // If we have any bytes saved, we should send them to the BLE stack
         // now.
         //
-        CordioHCITransportDriver_on_data_received(g_pui8ReadBuffer + g_consumed_bytes,
+        g_consumed_bytes += hciTrSerialRxIncoming(g_pui8ReadBuffer + g_consumed_bytes,
                                                   g_ui32NumBytes - g_consumed_bytes);
-        g_consumed_bytes = g_ui32NumBytes;
-        //g_consumed_bytes += hciTrSerialRxIncoming(g_pui8ReadBuffer + g_consumed_bytes,
-        //                                          g_ui32NumBytes - g_consumed_bytes);
 
         //
         // If the stack doesn't accept all of the bytes we had, we will need to
@@ -991,7 +993,7 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
                            "(needs %d bytes of space).\n",
                            g_ui32NumBytes);
 
-            ERROR_CHECK_VOID(HCI_DRV_RX_PACKET_TOO_LARGE);
+            error_check(HCI_DRV_RX_PACKET_TOO_LARGE);
         }
 
         if (ui32ErrorStatus != AM_HAL_STATUS_SUCCESS)
@@ -1054,11 +1056,8 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
         // If we have any bytes saved, we should send them to the BLE stack
         // now.
         //
-        CordioHCITransportDriver_on_data_received(g_pui8ReadBuffer + g_consumed_bytes,
+        g_consumed_bytes += hciTrSerialRxIncoming(g_pui8ReadBuffer + g_consumed_bytes,
                                                   g_ui32NumBytes - g_consumed_bytes);
-        g_consumed_bytes = g_ui32NumBytes;
-        // g_consumed_bytes += hciTrSerialRxIncoming(g_pui8ReadBuffer + g_consumed_bytes,
-        //                                           g_ui32NumBytes - g_consumed_bytes);
 
         //
         // If the stack doesn't accept all of the bytes we had,
@@ -1105,7 +1104,7 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
                 CRITICAL_PRINT("ERROR: Trying to receive an HCI packet larger than the hci driver buffer size (needs %d bytes of space).",
                                g_ui32NumBytes);
 
-                ERROR_CHECK_VOID(HCI_DRV_RX_PACKET_TOO_LARGE);
+                error_check(HCI_DRV_RX_PACKET_TOO_LARGE);
             }
 
             if ( ui32ErrorStatus == AM_HAL_STATUS_SUCCESS)
@@ -1132,10 +1131,8 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
                 // to read as much data as we send it.  If it can't, we need to
                 // know that.
                 //
+                g_consumed_bytes = hciTrSerialRxIncoming(g_pui8ReadBuffer, g_ui32NumBytes);
 
-                CordioHCITransportDriver_on_data_received(g_pui8ReadBuffer, g_ui32NumBytes);
-                g_consumed_bytes = g_ui32NumBytes;
-				// g_consumed_bytes = hciTrSerialRxIncoming(g_pui8ReadBuffer, g_ui32NumBytes);
                 if (g_consumed_bytes != g_ui32NumBytes)
                 {
 
@@ -1267,7 +1264,7 @@ HciDrvErrorHandlerSet(hci_drv_error_handler_t pfnErrorHandler)
 
 /*************************************************************************************************/
 /*!
- *  \fn     HciVsA3_SetRfPowerLevelEx
+ *  \fn     HciVscSetRfPowerLevelEx
  *
  *  \brief  Vendor specific command for settting Radio transmit power level
  *          for Nationz.
@@ -1277,27 +1274,84 @@ HciDrvErrorHandlerSet(hci_drv_error_handler_t pfnErrorHandler)
  *  \return true when success, otherwise false
  */
 /*************************************************************************************************/
+static const uint8_t ui8TxPowerRegValues[TX_POWER_LEVEL_MAX_VAL] = {0x04, 0x08, 0x0F};
 bool_t
-HciVsA3_SetRfPowerLevelEx(txPowerLevel_t txPowerlevel)
+HciVscSetRfPowerLevelEx(txPowerLevel_t txPowerlevel)
 {
-    switch (txPowerlevel) {
-
-        case TX_POWER_LEVEL_MINUS_10P0_dBm:
-            am_hal_ble_tx_power_set(BLE,0x04);
-            return true;
-            break;
-        case TX_POWER_LEVEL_0P0_dBm:
-            am_hal_ble_tx_power_set(BLE,0x08);
-            return true;
-            break;
-        case TX_POWER_LEVEL_PLUS_3P0_dBm:
-            am_hal_ble_tx_power_set(BLE,0x0F);
-            return true;
-            break;
-        default:
-            return false;
-            break;
+    if(txPowerlevel < TX_POWER_LEVEL_MAX_VAL)
+    {
+        am_hal_ble_tx_power_set(BLE, (uint8_t)ui8TxPowerRegValues[txPowerlevel]);
+        return true;
     }
+    else
+    {
+        // set value out of range
+        return false;
+    }
+}
+
+/*************************************************************************************************/
+/*!
+ *  \fn     HciVscConstantTransmission
+ *
+ *  \brief  This procedure is to enable/disable BLE Radio into constant transmission mode.
+ *
+ *  \param  start  BLE controller enters constant transmission mode if true
+ *
+ *  \return true when success, otherwise false
+ */
+/*************************************************************************************************/
+
+void
+HciVscConstantTransmission(uint8_t txchannel)
+{
+    am_util_ble_set_constant_transmission_ex(BLE, txchannel);
+}
+
+/*************************************************************************************************/
+/*!
+ *  \fn     HciVscSetCustom_BDAddr
+ *
+ *  \brief  This procedure is to set customer-provided Bluetooth address if needed.
+ *
+ *  \param  bd_addr  pointer to a bluetooth address customer allocates or NULL to use Apollo Device ID.
+ *
+ *  \return true when success
+ */
+/*************************************************************************************************/
+bool_t HciVscSetCustom_BDAddr(uint8_t *bd_addr)
+{
+    uint8_t invalid_bd_addr[6] = {0};
+
+    // When bd_addr is null, it will use Apollo's Device ID to form Bluetooth address.
+    if ((bd_addr == NULL) || (memcmp(invalid_bd_addr, bd_addr, 6) == 0))
+        return false;
+    else {
+        memcpy(g_BLEMacAddress, bd_addr, 6);
+        return true;
+    }
+}
+
+void HciVscUpdateBDAddress(void)
+{
+    HciVendorSpecificCmd(0xFC32, 6, g_BLEMacAddress);
+}
+/*************************************************************************************************/
+/*!
+ *  \fn     HciVscSetConstantTransmission
+ *
+ *  \brief  This procedure is to start/stop carrier wave output in BLE Radio.
+ *
+ *  \param  start  BLE controller enters carrier wave output mode if true
+ *
+ *  \return true when success, otherwise false
+ */
+/*************************************************************************************************/
+
+void
+HciVscCarrierWaveMode(uint8_t txchannel)
+{
+    am_util_ble_transmitter_control_ex(BLE, txchannel);
 }
 
 /*************************************************************************************************/
@@ -1327,5 +1381,3 @@ HciDrvEmptyWriteQueue(void)
 {
     am_hal_queue_from_array(&g_sWriteQueue, g_psWriteBuffers);
 }
-
-#endif

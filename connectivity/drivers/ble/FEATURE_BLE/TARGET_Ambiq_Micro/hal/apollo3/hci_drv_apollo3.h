@@ -8,7 +8,7 @@
 
 //*****************************************************************************
 //
-// Copyright (c) 2019, Ambiq Micro
+// Copyright (c) 2020, Ambiq Micro, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,66 +40,45 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 2.3.2 of the AmbiqSuite Development Package.
+// This is part of revision 2.5.1 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
-// SPDX-License-Identifier: BSD-3-Clause
 #ifndef HCI_DRV_APOLLO3_H
 #define HCI_DRV_APOLLO3_H
 
-#ifdef __cplusplus
-extern "C"
+//*****************************************************************************
+//
+// NATIONZ vendor specific events
+//
+//*****************************************************************************
+
+
+// Tx power level in dBm.
+typedef enum
 {
-#endif
-  //*****************************************************************************
-  //
-  // NATIONZ vendor specific events
-  //
-  //*****************************************************************************
+  TX_POWER_LEVEL_MINUS_10P0_dBm = 0x0,
+  TX_POWER_LEVEL_0P0_dBm,
+  TX_POWER_LEVEL_PLUS_3P0_dBm,
+  TX_POWER_LEVEL_MAX_VAL,
+}txPowerLevel_t;
 
-  // Tx power level in dBm.
-  typedef enum
-  {
-    TX_POWER_LEVEL_MINUS_10P0_dBm = 0x3,
-    TX_POWER_LEVEL_0P0_dBm = 0x8,
-    TX_POWER_LEVEL_PLUS_3P0_dBm = 0xF,
-    TX_POWER_LEVEL_INVALID = 0x10,
-  } txPowerLevel_t;
 
-#define HCI_DRV_SPECIFIC_ERROR_START 0x09000000
-  typedef enum
-  {
-    HCI_DRV_TRANSMIT_QUEUE_FULL = HCI_DRV_SPECIFIC_ERROR_START,
-    HCI_DRV_TX_PACKET_TOO_LARGE,
-    HCI_DRV_RX_PACKET_TOO_LARGE,
-    HCI_DRV_BLE_STACK_UNABLE_TO_ACCEPT_PACKET,
-    HCI_DRV_PACKET_TRANSMIT_FAILED,
-    HCI_DRV_IRQ_STUCK_HIGH,
-    HCI_DRV_TOO_MANY_PACKETS,
-  } hci_drv_error_t;
+bool_t HciVscSetRfPowerLevelEx(txPowerLevel_t txPowerlevel);
+#define HciVsA3_SetRfPowerLevelEx HciVscSetRfPowerLevelEx
+void   HciVscConstantTransmission(uint8_t txchannel);
+#define HciVsA3_ConstantTransmission HciVscConstantTransmission
+void   HciVscCarrierWaveMode(uint8_t txchannel);
+#define HciVsA3_CarrierWaveMode HciVscCarrierWaveMode
+bool_t HciVscSetCustom_BDAddr(uint8_t *bd_addr);
+extern void HciVscUpdateBDAddress(void);
 
-  typedef void (*hci_drv_error_handler_t)(uint32_t ui32Error);
-
-  bool_t HciVsA3_SetRfPowerLevelEx(txPowerLevel_t txPowerlevel);
-  void HciVsA3_ConstantTransmission(uint8_t txchannel);
-  void HciVsA3_CarrierWaveMode(uint8_t txchannel);
-
-  //*****************************************************************************
-  //
-  // Hci driver functions unique to Apollo3
-  //
-  //*****************************************************************************
-  extern void HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg);
-  extern void HciDrvHandlerInit(wsfHandlerId_t handlerId);
-  extern void HciDrvIntService(void);
-
-  uint16_t ap3_hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData);
-
-  extern void HciDrvRadioBoot(bool bColdBoot);
-  extern void HciDrvRadioShutdown(void);
-
-#ifdef __cplusplus
-};
-#endif
+//*****************************************************************************
+//
+// Hci driver functions unique to Apollo3
+//
+//*****************************************************************************
+extern void HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg);
+extern void HciDrvHandlerInit(wsfHandlerId_t handlerId);
+extern void HciDrvIntService(void);
 
 #endif // HCI_DRV_APOLLO3_H
