@@ -7908,7 +7908,7 @@
             "full", "bare-metal"
         ]
     },
-    "FAMILY_Apollo3": {
+"FAMILY_Apollo3": {
         "inherits": ["Target"],
         "core": "Cortex-M4F",
         "features": ["BLE"],

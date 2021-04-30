@@ -70,7 +70,7 @@ extern void CordioHCITransportDriver_on_data_received(uint8_t *data, uint16_t le
 // Use the interrupt-driven HCI driver?
 //
 //*****************************************************************************
-#define USE_NONBLOCKING_HCI             1
+#define USE_NONBLOCKING_HCI             0
 #define SKIP_FALLING_EDGES              0
 
 //*****************************************************************************

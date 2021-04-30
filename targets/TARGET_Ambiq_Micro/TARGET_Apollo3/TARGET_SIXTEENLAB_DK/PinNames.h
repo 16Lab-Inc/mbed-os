@@ -88,10 +88,12 @@ typedef enum
     LED4 = NC_VAL,
 
     // UART
-    SERIAL_TX = NC_VAL,
-    SERIAL_RX = NC_VAL,
-    USBTX = NC_VAL,
-    USBRX = NC_VAL,
+    SERIAL_TX = 8,
+    SERIAL_RX = 9,
+//    USBTX = 8,
+//    USBRX = 9,
+ CONSOLE_RX = 49,
+ CONSOLE_TX = 48,
 
     // Not connected
     NC = NC_VAL

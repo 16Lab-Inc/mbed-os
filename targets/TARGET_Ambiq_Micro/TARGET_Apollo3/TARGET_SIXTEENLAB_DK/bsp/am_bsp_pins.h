@@ -166,7 +166,7 @@ extern const am_hal_gpio_pincfg_t       g_AM_BSP_GPIO_IOM5_SDA;
 //  ITM_SWO pin: ITM Serial Wire Output.
 //
 //*****************************************************************************
-#define AM_BSP_GPIO_ITM_SWO             	33
+#define AM_BSP_GPIO_ITM_SWO             	22
 extern const am_hal_gpio_pincfg_t       g_AM_BSP_GPIO_ITM_SWO;
 
 //*****************************************************************************
