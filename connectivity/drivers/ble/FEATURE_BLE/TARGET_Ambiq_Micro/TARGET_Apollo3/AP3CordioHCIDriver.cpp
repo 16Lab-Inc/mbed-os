@@ -120,6 +120,7 @@ void AP3CordioHCIDriver::do_terminate()
 #endif
 }
 
+static const uint16_t aclBufSize = 12 + MBED_CONF_CORDIO_LL_MAX_ACL_SIZE + 4 + 4;
 ble::buf_pool_desc_t AP3CordioHCIDriver::get_buffer_pool_description()
 {
     static union {
@@ -127,11 +128,12 @@ ble::buf_pool_desc_t AP3CordioHCIDriver::get_buffer_pool_description()
         uint64_t align;
     };
     static const wsfBufPoolDesc_t pool_desc[] = {
-        {16, 64},
-        {32, 64},
-        {64, 32},
-        {128, 16},
-        {272, 4}};
+        {  16, 16  + 8},
+        {  32, 16 + 4 },
+        {  64, 8 },
+        { 128, 4 + MBED_CONF_CORDIO_LL_MAX_ADVERTISING_REPORTS },
+        { aclBufSize, MBED_CONF_CORDIO_LL_TX_BUFFERS + MBED_CONF_CORDIO_LL_RX_BUFFERS }
+    };
     return buf_pool_desc_t(buffer, pool_desc);
 }
 
@@ -158,6 +160,20 @@ void AP3CordioHCIDriver::start_reset_sequence()
 
     // update Bluetooth Address to controller
     HciVendorSpecificCmd(0xFC32, 6, g_BLEMacAddress);     
+}
+
+bool AP3CordioHCIDriver::get_random_static_address(ble::address_t& address){
+    uint8_t g_BLEMacAddress[6];
+    am_hal_mcuctrl_device_t sDevice;
+    am_hal_mcuctrl_info_get(AM_HAL_MCUCTRL_INFO_DEVICEID, &sDevice);
+    g_BLEMacAddress[0] = sDevice.ui32ChipID0;
+    g_BLEMacAddress[1] = sDevice.ui32ChipID0 >> 8;
+    g_BLEMacAddress[2] = sDevice.ui32ChipID0 >> 16;
+    g_BLEMacAddress[5] |= 0xC0;
+
+    memcpy(&address, g_BLEMacAddress, sizeof(g_BLEMacAddress));
+
+    return true;
 }
 
 void AP3CordioHCIDriver::handle_reset_sequence(uint8_t *pMsg)

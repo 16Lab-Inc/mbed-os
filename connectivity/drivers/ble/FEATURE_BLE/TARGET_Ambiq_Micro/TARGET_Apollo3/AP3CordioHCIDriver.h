@@ -44,6 +44,8 @@ namespace ble
         
         virtual void start_reset_sequence();
         virtual void handle_reset_sequence(uint8_t *pMsg);
+        
+        virtual bool get_random_static_address(ble::address_t& address);
 
 
         virtual ble::buf_pool_desc_t get_buffer_pool_description();
