@@ -41,6 +41,10 @@ namespace ble
         virtual void do_initialize();
 
         virtual void do_terminate();
+        
+        virtual void start_reset_sequence();
+        virtual void handle_reset_sequence(uint8_t *pMsg);
+
 
         virtual ble::buf_pool_desc_t get_buffer_pool_description();
 
