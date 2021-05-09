@@ -88,17 +88,17 @@ typedef enum
     LED4 = NC_VAL,
 
     // UART
-    SERIAL_TX = NC_VAL,
-    SERIAL_RX = NC_VAL,
-    USBTX = NC_VAL,
-    USBRX = NC_VAL,
+    SERIAL_TX = 37,
+    SERIAL_RX = 38,
+    CONSOLE_TX = SERIAL_TX,
+    CONSOLE_RX = SERIAL_RX,
 
     // Not connected
     NC = NC_VAL
 } PinName;
 
-#define STDIO_UART_TX USBTX
-#define STDIO_UART_RX USBRX
+#define STDIO_UART_TX SERIAL_TX
+#define STDIO_UART_RX SERIAL_RX
 
 #define IMU_I2C_ADDR    0x68
 #define HAPTIC_I2C_ADDR 0x5a
