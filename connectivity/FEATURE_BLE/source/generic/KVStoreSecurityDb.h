@@ -118,6 +118,8 @@ public:
     KVStoreSecurityDb();
     virtual ~KVStoreSecurityDb();
 
+    entry_t *as_entry(entry_handle_t db_handle);
+    
     /**
      * Validates or creates a kvstore entry for the security database.
      * @return true if KVStore works

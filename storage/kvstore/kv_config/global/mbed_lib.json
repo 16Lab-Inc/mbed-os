@@ -43,6 +43,9 @@
         },
         "ARM_MUSCA_S1_S": {
             "storage_type": "TDB_INTERNAL"
+        },
+        "SIXTEENLAB_DK":{
+            "storage_type": "TDB_INTERNAL"
         }
     }
 }
