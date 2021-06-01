@@ -8011,7 +8011,7 @@
         "mbed_rom_start": "0x0000c000",
         "mbed_rom_size": "0x000F4000",
         "mbed_ram_start": "0x10000000",
-        "mbed_ram_size": "0x4000",
+        "mbed_ram_size": "0x60000",
         "bootloader_supported": true,
         "device_name": "AMA3B1KK-KBR",
         "extra_labels": [
@@ -8091,6 +8091,10 @@
     "SIXTEENLAB_OZON": {
         "inherits": ["AMA3B1KK"],
         "macros_add": ["OZON_BRD"]
+    },
+    "SXTLAB_OZ_JUNE_21": {
+        "inherits": ["AMA3B1KK"],
+        "macros_add": ["OZON_JUNE_2021"]
     },
     "__build_tools_metadata__": {
         "version": "1",
