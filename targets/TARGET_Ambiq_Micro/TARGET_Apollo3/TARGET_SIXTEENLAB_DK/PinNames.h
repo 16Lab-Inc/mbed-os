@@ -93,6 +93,14 @@ typedef enum
     CONSOLE_TX = SERIAL_TX,
     CONSOLE_RX = SERIAL_RX,
 
+
+    SE_EN           = 31,
+    //...pins 45-46 are missing from WLCP device...
+    SE_EN_RF        = 32,
+    SE_SCL          = 33,
+    SE_SDA          = 34,
+
+
     // Not connected
     NC = NC_VAL
 } PinName;
